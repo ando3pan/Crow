@@ -94,4 +94,20 @@ describe('timerReducer', () => {
     expect(updated.breakDurationMs).toBe(2 * 60_000);
     expect(updated.remainingMs).toBe(10 * 60_000);
   });
+
+  test('SET_DURATIONS with a non-finite or non-positive duration is ignored', () => {
+    const state = createInitialState(DEFAULT_FOCUS_DURATION_MS, DEFAULT_BREAK_DURATION_MS);
+    const afterNaN = timerReducer(state, {
+      type: 'SET_DURATIONS',
+      focusDurationMs: NaN,
+      breakDurationMs: 2 * 60_000,
+    });
+    expect(afterNaN).toEqual(state);
+    const afterZero = timerReducer(state, {
+      type: 'SET_DURATIONS',
+      focusDurationMs: 0,
+      breakDurationMs: 2 * 60_000,
+    });
+    expect(afterZero).toEqual(state);
+  });
 });

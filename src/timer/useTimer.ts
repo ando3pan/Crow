@@ -38,14 +38,21 @@ export function useTimer(options?: {
   // Load persisted durations once on mount.
   useEffect(() => {
     (async () => {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as { focusDurationMs: number; breakDurationMs: number };
-        dispatch({
-          type: 'SET_DURATIONS',
-          focusDurationMs: parsed.focusDurationMs,
-          breakDurationMs: parsed.breakDurationMs,
-        });
+      try {
+        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        if (!stored) return;
+        const parsed = JSON.parse(stored) as { focusDurationMs?: unknown; breakDurationMs?: unknown };
+        const isValidDuration = (ms: unknown): ms is number =>
+          typeof ms === 'number' && Number.isFinite(ms) && ms > 0;
+        if (isValidDuration(parsed.focusDurationMs) && isValidDuration(parsed.breakDurationMs)) {
+          dispatch({
+            type: 'SET_DURATIONS',
+            focusDurationMs: parsed.focusDurationMs,
+            breakDurationMs: parsed.breakDurationMs,
+          });
+        }
+      } catch (error) {
+        console.warn('Failed to load persisted timer durations', error);
       }
     })();
   }, []);
@@ -82,6 +89,14 @@ export function useTimer(options?: {
   const setDurations = useCallback((focusMinutes: number, breakMinutes: number) => {
     const focusDurationMs = Math.round(focusMinutes * 60_000);
     const breakDurationMs = Math.round(breakMinutes * 60_000);
+    if (
+      !Number.isFinite(focusDurationMs) ||
+      focusDurationMs <= 0 ||
+      !Number.isFinite(breakDurationMs) ||
+      breakDurationMs <= 0
+    ) {
+      return;
+    }
     dispatch({ type: 'SET_DURATIONS', focusDurationMs, breakDurationMs });
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ focusDurationMs, breakDurationMs }));
   }, []);

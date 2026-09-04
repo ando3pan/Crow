@@ -68,3 +68,38 @@ test('reset() returns to idle at the configured focus duration', async () => {
   expect(result.current.phase).toBe('idle');
   expect(result.current.remainingMs).toBe(DEFAULT_FOCUS_DURATION_MS);
 });
+
+test('loads valid persisted durations on mount', async () => {
+  await AsyncStorage.setItem(
+    'loaf-and-focus:durations',
+    JSON.stringify({ focusDurationMs: 10 * 60_000, breakDurationMs: 2 * 60_000 })
+  );
+  const { result } = await renderHook(() => useTimer());
+  await act(async () => {
+    await Promise.resolve();
+  });
+  expect(result.current.focusDurationMs).toBe(10 * 60_000);
+  expect(result.current.breakDurationMs).toBe(2 * 60_000);
+});
+
+test('ignores corrupt persisted durations and keeps defaults', async () => {
+  await AsyncStorage.setItem('loaf-and-focus:durations', 'not valid json{');
+  const { result } = await renderHook(() => useTimer());
+  await act(async () => {
+    await Promise.resolve();
+  });
+  expect(result.current.focusDurationMs).toBe(DEFAULT_FOCUS_DURATION_MS);
+  expect(result.current.breakDurationMs).toBe(DEFAULT_BREAK_DURATION_MS);
+});
+
+test('setDurations ignores non-finite or non-positive values', async () => {
+  const { result } = await renderHook(() => useTimer());
+  await act(async () => {
+    result.current.setDurations(NaN, 5);
+  });
+  expect(result.current.focusDurationMs).toBe(DEFAULT_FOCUS_DURATION_MS);
+  await act(async () => {
+    result.current.setDurations(0, 5);
+  });
+  expect(result.current.focusDurationMs).toBe(DEFAULT_FOCUS_DURATION_MS);
+});

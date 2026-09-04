@@ -24,6 +24,11 @@ export default function SettingsSheet({
     setBreakText(String(breakMinutes));
   }, [focusMinutes, breakMinutes, visible]);
 
+  const focusValue = Number(focusText);
+  const breakValue = Number(breakText);
+  const isValid =
+    Number.isFinite(focusValue) && focusValue > 0 && Number.isFinite(breakValue) && breakValue > 0;
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={{ marginTop: 'auto', backgroundColor: 'white', padding: 24, gap: 12 }}>
@@ -44,7 +49,10 @@ export default function SettingsSheet({
         <View style={{ flexDirection: 'row', gap: 16 }}>
           <Pressable
             testID="save-settings-button"
-            onPress={() => onSave(Number(focusText), Number(breakText))}
+            disabled={!isValid}
+            onPress={() => {
+              if (isValid) onSave(focusValue, breakValue);
+            }}
           >
             <Text>Save</Text>
           </Pressable>

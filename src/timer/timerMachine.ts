@@ -105,6 +105,10 @@ export function timerReducer(state: TimerState, action: TimerAction): TimerState
     }
 
     case 'SET_DURATIONS': {
+      const isValidDuration = (ms: number) => Number.isFinite(ms) && ms > 0;
+      if (!isValidDuration(action.focusDurationMs) || !isValidDuration(action.breakDurationMs)) {
+        return state;
+      }
       const next = {
         ...state,
         focusDurationMs: action.focusDurationMs,

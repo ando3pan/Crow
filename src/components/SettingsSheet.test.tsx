@@ -33,3 +33,35 @@ test('close button calls onClose', async () => {
   await fireEvent.press(getByTestId('close-settings-button'));
   expect(onClose).toHaveBeenCalledTimes(1);
 });
+
+test('disables save and does not call onSave when focus minutes is cleared', async () => {
+  const onSave = jest.fn();
+  const { getByTestId } = await render(
+    <SettingsSheet
+      visible={true}
+      focusMinutes={25}
+      breakMinutes={5}
+      onClose={jest.fn()}
+      onSave={onSave}
+    />
+  );
+  await fireEvent.changeText(getByTestId('focus-minutes-input'), '');
+  await fireEvent.press(getByTestId('save-settings-button'));
+  expect(onSave).not.toHaveBeenCalled();
+});
+
+test('disables save and does not call onSave for non-numeric input', async () => {
+  const onSave = jest.fn();
+  const { getByTestId } = await render(
+    <SettingsSheet
+      visible={true}
+      focusMinutes={25}
+      breakMinutes={5}
+      onClose={jest.fn()}
+      onSave={onSave}
+    />
+  );
+  await fireEvent.changeText(getByTestId('focus-minutes-input'), 'abc');
+  await fireEvent.press(getByTestId('save-settings-button'));
+  expect(onSave).not.toHaveBeenCalled();
+});
